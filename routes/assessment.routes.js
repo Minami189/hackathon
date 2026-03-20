@@ -1,0 +1,35 @@
+import express from 'express';
+import multer from 'multer';
+import PDFParser from 'pdf2json';
+
+const router = express.Router();
+
+//null pdf parse context, then true for raw text to get raw text
+const pdfParser = new PDFParser(null, true);
+
+
+//saving on RAM
+const upload = multer({ storage: multer.memoryStorage() });
+
+
+//upload.single uses the name resume to find what file to use from frontend
+//upload.single is so that we can get req.file.buffer
+router.post('/extract', upload.single('resume'), (req, res) => {
+    
+    if(!req.file){
+        return res.json({success:false, error:"received no file"});
+    }
+    pdfParser.parseBuffer(req.file.buffer);
+
+    pdfParser.on("pdfParser_dataReady", (pdfData) => {
+        const rawText = pdfParser.getRawTextContent();
+        const decodedText = decodeURIComponent(rawText);
+        console.log(decodedText);
+    });
+});
+
+router.post('/upload', upload.single('resume'), (req, res) => {
+    
+});
+
+export default router;
