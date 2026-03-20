@@ -133,23 +133,134 @@
                         detailDiv.style.paddingTop = '10px';
                         
                         let htmlContent = `<h3>${assmnt.title || assmnt.skill} (${assmnt.priority || ''})</h3>`;
+                        detailDiv.innerHTML = htmlContent;
+                        
+                        const questionsContainer = document.createElement('div');
+                        
                         if (assmnt.questions) {
-                            assmnt.questions.forEach(q => {
-                                htmlContent += `
-                                    <div style="margin-bottom: 20px;">
-                                        <strong>Q${q.id || '-'}: ${q.question || ''}</strong><br>
-                                        ${q.code_snippet && q.code_snippet !== 'null' ? `<pre>${String(q.code_snippet).replace(/</g, '&lt;').replace(/>/g, '&gt;')}</pre>` : ''}
-                                        <ul style="list-style-type: none; padding-left: 0;">
-                                            ${q.options ? q.options.map(opt => `<li>- ${String(opt).replace(/</g, '&lt;').replace(/>/g, '&gt;')}</li>`).join('') : ''}
-                                        </ul>
-                                        <em>Correct Answer: ${q.correct_answer || ''}</em><br>
-                                        <small><strong>Explanation:</strong> ${q.explanation || ''}</small>
+                            assmnt.questions.forEach((q, qIndex) => {
+                                const qBlock = document.createElement('div');
+                                qBlock.style.marginBottom = '30px';
+                                qBlock.className = 'question-block';
+                                
+                                let blockHtml = `<strong>Q${q.id || (qIndex + 1)}: ${q.question || ''}</strong><br>`;
+                                if (q.code_snippet && q.code_snippet !== 'null') {
+                                    blockHtml += `<pre>${String(q.code_snippet).replace(/</g, '&lt;').replace(/>/g, '&gt;')}</pre>`;
+                                }
+                                
+                                blockHtml += `<div style="margin-top: 10px;">`;
+                                let renderOptions = q.options;
+                                if ((!renderOptions || renderOptions.length === 0) && String(q.type).toLowerCase() === 'true_false') {
+                                    renderOptions = ['True', 'False'];
+                                }
+                                if (renderOptions) {
+                                    renderOptions.forEach((opt, optIndex) => {
+                                        blockHtml += `
+                                            <div style="margin-bottom: 8px;">
+                                                <label style="cursor: pointer; display: flex; align-items: start; gap: 8px;">
+                                                    <input type="radio" name="q-${index}-${qIndex}" value="${String(opt).replace(/"/g, '&quot;')}" style="margin-top: 4px;" />
+                                                    <span>${String(opt).replace(/</g, '&lt;').replace(/>/g, '&gt;')}</span>
+                                                </label>
+                                            </div>
+                                        `;
+                                    });
+                                }
+                                blockHtml += `</div>`;
+                                
+                                blockHtml += `
+                                    <div class="feedback" style="display: none; margin-top: 15px; padding: 12px; background-color: #f9f9f9; border-left: 4px solid #ccc;">
+                                        <div class="feedback-result" style="font-weight: bold; margin-bottom: 5px;"></div>
+                                        <div style="margin-bottom: 5px;"><em>Correct Answer: <span style="font-weight: 500;">${String(q.correct_answer || '').replace(/</g, '&lt;').replace(/>/g, '&gt;')}</span></em></div>
+                                        <div><small><strong>Explanation:</strong> ${q.explanation || ''}</small></div>
                                     </div>
                                 `;
+                                
+                                qBlock.innerHTML = blockHtml;
+                                qBlock.correctAnswerValue = q.correct_answer;
+                                questionsContainer.appendChild(qBlock);
                             });
                         }
                         
-                        detailDiv.innerHTML = htmlContent;
+                        detailDiv.appendChild(questionsContainer);
+                        
+                        if (assmnt.questions && assmnt.questions.length > 0) {
+                            const submitBtn = document.createElement('button');
+                            submitBtn.textContent = 'Submit Answers';
+                            submitBtn.style.marginTop = '15px';
+                            submitBtn.style.padding = '8px 16px';
+                            submitBtn.style.cursor = 'pointer';
+                            submitBtn.style.backgroundColor = '#000';
+                            submitBtn.style.color = '#fff';
+                            submitBtn.style.border = 'none';
+                            submitBtn.style.fontWeight = 'bold';
+                            
+                            submitBtn.onclick = () => {
+                                const qBlocks = questionsContainer.querySelectorAll('.question-block');
+                                let score = 0;
+                                
+                                qBlocks.forEach(block => {
+                                    const correctAnswer = block.correctAnswerValue || '';
+                                    const selectedInput = block.querySelector('input[type="radio"]:checked');
+                                    const feedback = block.querySelector('.feedback');
+                                    const feedbackResult = block.querySelector('.feedback-result');
+                                    
+                                    feedback.style.display = 'block';
+                                    
+                                    if (selectedInput) {
+                                        let selRaw = String(selectedInput.value).trim();
+                                        let corRaw = String(correctAnswer).trim();
+                                        
+                                        let isCorrect = selRaw.toLowerCase() === corRaw.toLowerCase();
+                                        
+                                        if (!isCorrect) {
+                                            let stripSel = selRaw.replace(/^[a-e][\.\)]\s*/i, '').trim().toLowerCase();
+                                            let stripCor = corRaw.replace(/^[a-e][\.\)]\s*/i, '').trim().toLowerCase();
+                                            
+                                            if (stripSel === stripCor && stripSel.length > 0) {
+                                                isCorrect = true;
+                                            } else if (/^[a-e]$/i.test(corRaw)) {
+                                                isCorrect = selRaw.toLowerCase().startsWith(corRaw.toLowerCase() + '.') || selRaw.toLowerCase().startsWith(corRaw.toLowerCase() + ')');
+                                            } else if (/^[a-e]$/i.test(selRaw)) {
+                                                isCorrect = corRaw.toLowerCase().startsWith(selRaw.toLowerCase() + '.') || corRaw.toLowerCase().startsWith(selRaw.toLowerCase() + ')');
+                                            } else if (stripSel.length > 3 && stripCor.length > 3 && (stripSel.includes(stripCor) || stripCor.includes(stripSel))) {
+                                                isCorrect = true;
+                                            }
+                                        }
+
+                                        if (isCorrect) {
+                                            score++;
+                                            feedbackResult.textContent = 'Correct!';
+                                            feedbackResult.style.color = 'green';
+                                            feedback.style.borderLeftColor = 'green';
+                                        } else {
+                                            feedbackResult.textContent = 'Incorrect';
+                                            feedbackResult.style.color = 'red';
+                                            feedback.style.borderLeftColor = 'red';
+                                        }
+                                    } else {
+                                        feedbackResult.textContent = 'No answer selected';
+                                        feedbackResult.style.color = 'orange';
+                                        feedback.style.borderLeftColor = 'orange';
+                                    }
+                                    
+                                    block.querySelectorAll('input[type="radio"]').forEach(inp => inp.disabled = true);
+                                });
+                                
+                                let scoreDiv = document.createElement('div');
+                                scoreDiv.style.marginTop = '20px';
+                                scoreDiv.style.padding = '15px';
+                                scoreDiv.style.backgroundColor = '#f0f0f0';
+                                scoreDiv.style.borderLeft = '4px solid #000';
+                                scoreDiv.style.fontSize = '18px';
+                                scoreDiv.style.fontWeight = 'bold';
+                                scoreDiv.textContent = `You scored ${score} out of ${qBlocks.length}!`;
+                                
+                                detailDiv.appendChild(scoreDiv);
+                                submitBtn.style.display = 'none';
+                            };
+                            
+                            detailDiv.appendChild(submitBtn);
+                        }
                         
                         btn.onclick = () => {
                             Array.from(detailsContainer.children).forEach(child => child.style.display = 'none');

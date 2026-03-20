@@ -11,6 +11,8 @@ Generate a **separate 15-question assessment for each skill** listed in **{skill
 
 Do NOT mix skills across assessments. Each assessment must be fully dedicated to one skill only.
 
+CRITICAL INSTRUCTION: You MUST generate EXACTLY 15 questions for every single skill listed. DO NOT output fewer questions per skill. DO NOT be lazy. You must provide the full array of 15 questions for every assessment.
+
 ---
 
 ## Step 1 — Skill Priority Assignment
