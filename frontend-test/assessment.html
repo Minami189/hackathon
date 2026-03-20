@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Assessment Generator</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #0d1117;
+            --text-primary: #e6edf3;
+            --text-secondary: #7d8590;
+            --card-bg: #161b22;
+            --border-color: #30363d;
+            --primary-btn: #238636;
+            --primary-btn-hover: #2ea043;
+            --shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+            --transition: all 0.3s ease;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+        }
+
+        .container {
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 40px;
+            width: 100%;
+            max-width: 480px;
+            text-align: center;
+            box-shadow: var(--shadow);
+            animation: fadeIn 0.8s ease-out forwards;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        h1 {
+            margin-top: 0;
+            font-size: 24px;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .input-field {
+            width: 100%;
+            padding: 12px;
+            margin-bottom: 20px;
+            border-radius: 6px;
+            border: 1px solid var(--border-color);
+            background-color: #0d1117;
+            color: var(--text-primary);
+            font-size: 15px;
+            box-sizing: border-box;
+            outline: none;
+            transition: var(--transition);
+        }
+
+        .input-field:focus {
+            border-color: #58a6ff;
+            box-shadow: 0 0 0 3px rgba(88, 166, 255, 0.3);
+        }
+
+        .result-container {
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 20px;
+            width: 100%;
+            max-width: 800px;
+            margin: 20px auto;
+            text-align: left;
+            box-shadow: var(--shadow);
+            animation: fadeIn 0.8s ease-out forwards;
+        }
+
+        .result-container h2 {
+            margin-top: 0;
+            font-size: 20px;
+            color: #58a6ff;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 10px;
+        }
+
+        pre {
+            background-color: #0d1117;
+            padding: 15px;
+            border-radius: 6px;
+            border: 1px solid var(--border-color);
+            overflow-x: auto;
+            color: #e6edf3;
+            font-size: 13px;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+
+
+        p {
+            color: var(--text-secondary);
+            font-size: 14px;
+            line-height: 1.6;
+            margin-bottom: 30px;
+        }
+
+        .btn-generate {
+            background-color: var(--primary-btn);
+            color: #ffffff;
+            border: none;
+            border-radius: 6px;
+            padding: 12px 24px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+            width: 100%;
+            box-shadow: 0 4px 12px rgba(35, 134, 54, 0.2);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn-generate:hover {
+            background-color: var(--primary-btn-hover);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(35, 134, 54, 0.3);
+        }
+
+        .btn-generate:active {
+            transform: translateY(0);
+        }
+
+        .btn-generate::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 5px;
+            height: 5px;
+            background: rgba(255, 255, 255, 0.5);
+            opacity: 0;
+            border-radius: 100%;
+            transform: scale(1, 1) translate(-50%);
+            transform-origin: 50% 50%;
+        }
+
+        @keyframes ripple {
+            0% {
+                transform: scale(0, 0);
+                opacity: 1;
+            }
+
+            20% {
+                transform: scale(25, 25);
+                opacity: 1;
+            }
+
+            100% {
+                opacity: 0;
+                transform: scale(40, 40);
+            }
+        }
+
+        .btn-generate:focus:not(:active)::after {
+            animation: ripple 1s ease-out;
+        }
+
+        #status-area {
+            margin-top: 20px;
+            font-size: 14px;
+            min-height: 20px;
+            font-weight: 500;
+        }
+
+        .success {
+            color: #3fb950;
+        }
+
+        .error {
+            color: #f85149;
+        }
+
+        .loading {
+            color: #58a6ff;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="container">
+        <h1>AI Assessment Generator</h1>
+        <p>Ready to evaluate incoming profiles? Enter the extracted candidate variables below to instantly generate a
+            comprehensive assessment report.</p>
+
+        <input type="text" id="jobTitle" class="input-field" placeholder="Job Title (e.g. Frontend Developer)" />
+        <input type="text" id="skills" class="input-field" placeholder="Skills (comma separated, e.g. React, JS)" />
+
+        <button class="btn-generate" id="generateBtn">
+            Generate Assessment
+        </button>
+
+        <div id="status-area"></div>
+    </div>
+
+    <!-- Result Area to Display Assessment -->
+    <div class="result-container" id="resultContainer" style="display: none;">
+        <h2>Generated Assessment</h2>
+        <pre id="assessmentResult"></pre>
+    </div>
+
+    <script>
+        const generateBtn = document.getElementById('generateBtn');
+        const statusArea = document.getElementById('status-area');
+        const jobTitleInput = document.getElementById('jobTitle');
+        const skillsInput = document.getElementById('skills');
+        const resultContainer = document.getElementById('resultContainer');
+        const assessmentResult = document.getElementById('assessmentResult');
+
+        generateBtn.addEventListener('click', async () => {
+            const jobTitle = jobTitleInput.value.trim();
+            const skillsVal = skillsInput.value.trim();
+
+            if (!jobTitle || !skillsVal) {
+                statusArea.textContent = 'Please enter both Job Title and Skills.';
+                statusArea.className = 'error';
+                return;
+            }
+
+            // Split skills into an array
+            const skills = skillsVal.split(',').map(s => s.trim());
+
+            statusArea.textContent = 'Generating... (This may take a moment based on AI processing)';
+            statusArea.className = 'loading';
+            generateBtn.disabled = true;
+            generateBtn.style.opacity = '0.7';
+            resultContainer.style.display = 'none';
+
+            try {
+                const response = await fetch('/api/v1/generate', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ jobTitle, skills })
+                });
+
+                const data = await response.json();
+
+                if (!response.ok || !data.success) {
+                    throw new Error(data.error || "Failed to generate assessment");
+                }
+
+                statusArea.textContent = 'Assessment generated successfully!';
+                statusArea.className = 'success';
+
+                // Display Result
+                resultContainer.style.display = 'block';
+                assessmentResult.textContent = JSON.stringify(data.assessment, null, 2);
+
+            } catch (error) {
+                statusArea.textContent = 'Error: ' + error.message;
+                statusArea.className = 'error';
+                console.error(error);
+            } finally {
+                generateBtn.disabled = false;
+                generateBtn.style.opacity = '1';
+
+                if (statusArea.className === 'success') {
+                    setTimeout(() => {
+                        statusArea.textContent = '';
+                    }, 4000);
+                }
+            }
+        });
+    </script>
+</body>
+
+</html>

@@ -9,3 +9,4 @@
 
 # .env contents:
   - PORT
+  - GROQ_API_KEY
