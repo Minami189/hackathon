@@ -29,7 +29,7 @@ export async function generateAssessment(jobTitle, skills) {
             ],
             "model": "llama-3.3-70b-versatile", // Using a standard and reliable Groq model for JSON parsing; feel free to change!
             "temperature": 0.2, // Lower temp for more deterministic JSON
-            "max_completion_tokens": 8192,
+            "max_completion_tokens": 15491,
             "top_p": 1,
             "stream": false, // Set to false to get it all at once to send to the frontend
             "response_format": { "type": "json_object" }

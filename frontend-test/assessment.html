@@ -7,199 +7,40 @@
     <title>Assessment Generator</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        :root {
-            --bg-color: #0d1117;
-            --text-primary: #e6edf3;
-            --text-secondary: #7d8590;
-            --card-bg: #161b22;
-            --border-color: #30363d;
-            --primary-btn: #238636;
-            --primary-btn-hover: #2ea043;
-            --shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
-            --transition: all 0.3s ease;
-        }
-
         body {
-            margin: 0;
-            padding: 0;
-            font-family: 'Inter', sans-serif;
-            background-color: var(--bg-color);
-            color: var(--text-primary);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            min-height: 100vh;
+            font-family: sans-serif;
+            margin: 20px;
+            color: black;
+            background-color: white;
         }
-
         .container {
-            background-color: var(--card-bg);
-            border: 1px solid var(--border-color);
-            border-radius: 12px;
-            padding: 40px;
-            width: 100%;
-            max-width: 480px;
-            text-align: center;
-            box-shadow: var(--shadow);
-            animation: fadeIn 0.8s ease-out forwards;
-        }
-
-        @keyframes fadeIn {
-            from {
-                opacity: 0;
-                transform: translateY(20px);
-            }
-
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        h1 {
-            margin-top: 0;
-            font-size: 24px;
-            font-weight: 600;
-            color: var(--text-primary);
-        }
-
-        .input-field {
-            width: 100%;
-            padding: 12px;
+            max-width: 600px;
             margin-bottom: 20px;
-            border-radius: 6px;
-            border: 1px solid var(--border-color);
-            background-color: #0d1117;
-            color: var(--text-primary);
-            font-size: 15px;
-            box-sizing: border-box;
-            outline: none;
-            transition: var(--transition);
         }
-
-        .input-field:focus {
-            border-color: #58a6ff;
-            box-shadow: 0 0 0 3px rgba(88, 166, 255, 0.3);
-        }
-
-        .result-container {
-            background-color: var(--card-bg);
-            border: 1px solid var(--border-color);
-            border-radius: 12px;
-            padding: 20px;
+        .input-field {
+            display: block;
             width: 100%;
-            max-width: 800px;
-            margin: 20px auto;
-            text-align: left;
-            box-shadow: var(--shadow);
-            animation: fadeIn 0.8s ease-out forwards;
+            margin-bottom: 10px;
+            padding: 5px;
         }
-
-        .result-container h2 {
-            margin-top: 0;
-            font-size: 20px;
-            color: #58a6ff;
-            border-bottom: 1px solid var(--border-color);
-            padding-bottom: 10px;
-        }
-
-        pre {
-            background-color: #0d1117;
-            padding: 15px;
-            border-radius: 6px;
-            border: 1px solid var(--border-color);
-            overflow-x: auto;
-            color: #e6edf3;
-            font-size: 13px;
-            white-space: pre-wrap;
-            word-wrap: break-word;
-        }
-
-
-        p {
-            color: var(--text-secondary);
-            font-size: 14px;
-            line-height: 1.6;
-            margin-bottom: 30px;
-        }
-
         .btn-generate {
-            background-color: var(--primary-btn);
-            color: #ffffff;
-            border: none;
-            border-radius: 6px;
-            padding: 12px 24px;
-            font-size: 16px;
-            font-weight: 600;
+            padding: 5px 10px;
             cursor: pointer;
-            transition: var(--transition);
-            width: 100%;
-            box-shadow: 0 4px 12px rgba(35, 134, 54, 0.2);
-            position: relative;
-            overflow: hidden;
         }
-
-        .btn-generate:hover {
-            background-color: var(--primary-btn-hover);
-            transform: translateY(-2px);
-            box-shadow: 0 6px 16px rgba(35, 134, 54, 0.3);
-        }
-
-        .btn-generate:active {
-            transform: translateY(0);
-        }
-
-        .btn-generate::after {
-            content: '';
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            width: 5px;
-            height: 5px;
-            background: rgba(255, 255, 255, 0.5);
-            opacity: 0;
-            border-radius: 100%;
-            transform: scale(1, 1) translate(-50%);
-            transform-origin: 50% 50%;
-        }
-
-        @keyframes ripple {
-            0% {
-                transform: scale(0, 0);
-                opacity: 1;
-            }
-
-            20% {
-                transform: scale(25, 25);
-                opacity: 1;
-            }
-
-            100% {
-                opacity: 0;
-                transform: scale(40, 40);
-            }
-        }
-
-        .btn-generate:focus:not(:active)::after {
-            animation: ripple 1s ease-out;
-        }
-
         #status-area {
+            margin-top: 10px;
+            font-weight: bold;
+        }
+        .result-container {
+            max-width: 800px;
             margin-top: 20px;
-            font-size: 14px;
-            min-height: 20px;
-            font-weight: 500;
+            border-top: 2px solid black;
+            padding-top: 10px;
         }
-
-        .success {
-            color: #3fb950;
-        }
-
-        .error {
-            color: #f85149;
-        }
-
-        .loading {
-            color: #58a6ff;
+        pre {
+            background-color: #eee;
+            padding: 10px;
+            overflow-x: auto;
         }
     </style>
 </head>
@@ -223,8 +64,9 @@
 
     <!-- Result Area to Display Assessment -->
     <div class="result-container" id="resultContainer" style="display: none;">
-        <h2>Generated Assessment</h2>
-        <pre id="assessmentResult"></pre>
+        <h2>Generated Assessments</h2>
+        <div id="assessmentButtons"></div>
+        <div id="assessmentDetails"></div>
     </div>
 
     <script>
@@ -272,7 +114,55 @@
 
                 // Display Result
                 resultContainer.style.display = 'block';
-                assessmentResult.textContent = JSON.stringify(data.assessment, null, 2);
+                const btnContainer = document.getElementById('assessmentButtons');
+                const detailsContainer = document.getElementById('assessmentDetails');
+                btnContainer.innerHTML = '';
+                detailsContainer.innerHTML = '';
+
+                if (data.assessment && Array.isArray(data.assessment.assessments)) {
+                    data.assessment.assessments.forEach((assmnt, index) => {
+                        const btn = document.createElement('button');
+                        btn.textContent = `View ${assmnt.skill || `Assessment ${index + 1}`}`;
+                        btn.style.marginRight = '10px';
+                        btn.style.marginBottom = '10px';
+                        
+                        const detailDiv = document.createElement('div');
+                        detailDiv.style.display = 'none';
+                        detailDiv.style.marginTop = '20px';
+                        detailDiv.style.borderTop = '1px dashed black';
+                        detailDiv.style.paddingTop = '10px';
+                        
+                        let htmlContent = `<h3>${assmnt.title || assmnt.skill} (${assmnt.priority || ''})</h3>`;
+                        if (assmnt.questions) {
+                            assmnt.questions.forEach(q => {
+                                htmlContent += `
+                                    <div style="margin-bottom: 20px;">
+                                        <strong>Q${q.id || '-'}: ${q.question || ''}</strong><br>
+                                        ${q.code_snippet && q.code_snippet !== 'null' ? `<pre>${String(q.code_snippet).replace(/</g, '&lt;').replace(/>/g, '&gt;')}</pre>` : ''}
+                                        <ul style="list-style-type: none; padding-left: 0;">
+                                            ${q.options ? q.options.map(opt => `<li>- ${String(opt).replace(/</g, '&lt;').replace(/>/g, '&gt;')}</li>`).join('') : ''}
+                                        </ul>
+                                        <em>Correct Answer: ${q.correct_answer || ''}</em><br>
+                                        <small><strong>Explanation:</strong> ${q.explanation || ''}</small>
+                                    </div>
+                                `;
+                            });
+                        }
+                        
+                        detailDiv.innerHTML = htmlContent;
+                        
+                        btn.onclick = () => {
+                            Array.from(detailsContainer.children).forEach(child => child.style.display = 'none');
+                            detailDiv.style.display = 'block';
+                        };
+                        
+                        btnContainer.appendChild(btn);
+                        detailsContainer.appendChild(detailDiv);
+                    });
+                } else {
+                    // Fallback in case AI doesn't follow the exact JSON grouping structure
+                    detailsContainer.innerHTML = '<pre>' + JSON.stringify(data.assessment, null, 2) + '</pre>';
+                }
 
             } catch (error) {
                 statusArea.textContent = 'Error: ' + error.message;

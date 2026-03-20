@@ -54,7 +54,7 @@ Allowed question types: `multiple_choice`, `true_false`, `code_output`, `fill_bl
 ---
 
 ## Output Format
-Return ONLY a valid JSON object. No explanations, no markdown fences, no extra text outside the JSON.
+You must return ONLY a valid JSON object. Ensure all nested code snippets use single quotes for internal strings or properly escape double quotes with backslashes to maintain valid JSON syntax. Do not include any markdown formatting like ```json.
 
 {
   "job_title": "{job_title}",
