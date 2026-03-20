@@ -9,12 +9,11 @@ const router = express.Router();
 const pdfParser = new PDFParser(null, true);
 
 
-//saving on RAM
+
 const upload = multer({ storage: multer.memoryStorage() });
 
 
-//upload.single uses the name resume to find what file to use from frontend
-//upload.single is so that we can get req.file.buffer
+
 router.post('/extract', upload.single('resume'), (req, res) => {
 
     if (!req.file) {
