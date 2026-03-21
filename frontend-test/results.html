@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <title>My Results</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
     <div>
@@ -28,6 +29,9 @@
             <!-- Rows injected dynamically -->
         </tbody>
     </table>
+
+    <div id="chartContainer" style="width: 600px; max-width: 100%; margin: 30px 0; display: none;">
+    </div>
 
     <hr>
 
@@ -75,6 +79,10 @@
                     status.style.display = 'none';
                     table.style.display = 'table';
 
+                    // Group exactly for Radar Chart
+                    const uniqueSkills = [...new Set(data.results.map(r => r.skill))];
+                    const datasetsByRole = {};
+
                     data.results.forEach(r => {
                         const tr = document.createElement('tr');
                         
@@ -97,11 +105,15 @@
                         
                         let percentStr = "Not Taken";
                         if (answered > 0 && total > 0) {
-                            const p = Math.round((correct / total) * 100);
-                            percentStr = p + '%';
+                            percentStr = Math.round((correct / total) * 100) + '%';
                         }
-
                         percentCell.textContent = percentStr;
+
+                        // Radar Grouping mapping hook using EXACT raw correct score instead of %
+                        if (!datasetsByRole[r.job_title]) {
+                            datasetsByRole[r.job_title] = {};
+                        }
+                        datasetsByRole[r.job_title][r.skill] = correct;
 
                         tr.appendChild(dateCell);
                         tr.appendChild(skillCell);
@@ -111,6 +123,70 @@
 
                         tbody.appendChild(tr);
                     });
+
+                    // Render Separate Radar Charts per Role
+                    const chartContainer = document.getElementById('chartContainer');
+                    chartContainer.innerHTML = ''; // clear initial contents
+
+                    const colors = [
+                        { bg: 'rgba(54, 162, 235, 0.2)', border: 'rgba(54, 162, 235, 1)' },
+                        { bg: 'rgba(255, 99, 132, 0.2)', border: 'rgba(255, 99, 132, 1)' },
+                        { bg: 'rgba(75, 192, 192, 0.2)', border: 'rgba(75, 192, 192, 1)' }
+                    ];
+
+                    let cIdx = 0;
+                    for (const role in datasetsByRole) {
+                        const skillsMap = datasetsByRole[role];
+                        const roleSkills = Object.keys(skillsMap);
+                        const dataPoints = roleSkills.map(s => skillsMap[s]);
+
+                        const wrapper = document.createElement('div');
+                        wrapper.style.marginBottom = '40px';
+                        
+                        const title = document.createElement('h3');
+                        title.textContent = `Skills Profile: ${role}`;
+                        wrapper.appendChild(title);
+
+                        const canvas = document.createElement('canvas');
+                        wrapper.appendChild(canvas);
+                        chartContainer.appendChild(wrapper);
+
+                        new Chart(canvas, {
+                            type: 'radar',
+                            data: {
+                                labels: roleSkills,
+                                datasets: [{
+                                    label: role,
+                                    data: dataPoints,
+                                    fill: true,
+                                    backgroundColor: colors[cIdx % colors.length].bg,
+                                    borderColor: colors[cIdx % colors.length].border,
+                                    pointBackgroundColor: colors[cIdx % colors.length].border,
+                                    pointBorderColor: '#fff',
+                                    pointHoverBackgroundColor: '#fff',
+                                    pointHoverBorderColor: colors[cIdx % colors.length].border
+                                }]
+                            },
+                            options: {
+                                responsive: true,
+                                scales: {
+                                    r: {
+                                        angleLines: { display: true },
+                                        min: 0,
+                                        max: 15,
+                                        ticks: {
+                                            stepSize: 3
+                                        }
+                                    }
+                                }
+                            }
+                        });
+                        
+                        cIdx++;
+                    }
+
+                    chartContainer.style.display = 'block';
+
                 } else {
                     status.textContent = "You haven't generated or taken any assessments yet.";
                     return; 
