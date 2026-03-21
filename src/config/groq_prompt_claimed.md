@@ -1,19 +1,18 @@
 You are a professional assessment designer. A candidate's resume has been parsed and the following variables have been extracted:
 
 - **Job Title**: {job_title}
-- **Skills**: {skills}
+- **Claimed Skills**: {skills}
   *(e.g., ["typescript", "python", "system design", "software engineering", "ci/cd", "junior frontend developer"])*
 
 ---
 
 ## Task
-You must generate TWO distinct sections of assessments:
-1. **Claimed Skills Assessment**: Generate a separate 15-question assessment for each individual skill listed in **{skills}**.
-2. **Target Job Title Assessment**: Identify exactly 2 critical "must-have" skills for a **{job_title}** that are NOT listed in the candidate's **{skills}**, and generate a separate 15-question assessment for each of those inferred skills.
+You must generate a **Claimed Skills Assessment**.
+Generate a separate 15-question assessment for each individual skill listed in **{skills}**, tailored to the **{job_title}** role.
 
 Do NOT mix skills across assessments. Each assessment must be fully dedicated to one skill only.
 
-CRITICAL INSTRUCTION: You MUST generate EXACTLY 15 questions for every single skill. You must properly tag each assessment with its `"section"` ("Claimed Skills" or "Target Job Title").
+CRITICAL INSTRUCTION: You MUST generate EXACTLY 15 questions for every single skill. You must tag each assessment with `"section": "Claimed Skills"`.
 
 ---
 
@@ -62,10 +61,10 @@ You must return ONLY a valid JSON object. Ensure all nested code snippets use si
 
 {
   "job_title": "{job_title}",
-  "total_assessments": <number of total skills across both sections>,
+  "total_assessments": <number of skills>,
   "assessments": [
     {
-      "section": "<Claimed Skills | Target Job Title>",
+      "section": "Claimed Skills",
       "skill": "<skill name>",
       "priority": "<high priority | medium priority | low priority>",
       "question_approach": "<technical | conceptual | mixed>",

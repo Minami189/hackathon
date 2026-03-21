@@ -48,7 +48,10 @@
 <body>
 
     <div class="container">
-        <h1>AI Assessment Generator</h1>
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+            <h1>AI Assessment Generator</h1>
+            <a href="/results" style="padding: 8px 16px; background: #000; color: #fff; text-decoration: none; border-radius: 4px; font-weight: bold; font-size: 14px;">View My Results</a>
+        </div>
         <p>Ready to evaluate incoming profiles? Enter the extracted candidate variables below to instantly generate a
             comprehensive assessment report.</p>
 
@@ -105,17 +108,38 @@
             resultContainer.style.display = 'none';
 
             try {
-                const response = await fetch('/api/v1/generate', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ jobTitle, skills, userId })
-                });
+                const [claimedRes, targetRes] = await Promise.all([
+                    fetch('/api/v1/generate', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ jobTitle, skills, userId, type: 'claimed' })
+                    }),
+                    fetch('/api/v1/generate', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ jobTitle, skills, userId, type: 'target' })
+                    })
+                ]);
 
-                const data = await response.json();
+                const claimedData = await claimedRes.json();
+                const targetData = await targetRes.json();
 
-                if (!response.ok || !data.success) {
-                    throw new Error(data.error || "Failed to generate assessment");
+                if (!claimedRes.ok || !claimedData.success) {
+                    throw new Error(claimedData.error || "Failed to generate claimed assessment");
                 }
+                if (!targetRes.ok || !targetData.success) {
+                    throw new Error(targetData.error || "Failed to generate target assessment");
+                }
+
+                const allAssmnts = [];
+                if (claimedData.assessment && Array.isArray(claimedData.assessment.assessments)) {
+                    allAssmnts.push(...claimedData.assessment.assessments);
+                }
+                if (targetData.assessment && Array.isArray(targetData.assessment.assessments)) {
+                    allAssmnts.push(...targetData.assessment.assessments);
+                }
+                
+                const data = { assessment: { assessments: allAssmnts } };
 
                 statusArea.textContent = 'Assessment generated successfully!';
                 statusArea.className = 'success';
@@ -127,12 +151,27 @@
                 btnContainer.innerHTML = '';
                 detailsContainer.innerHTML = '';
 
+                const claimedSkillsSection = document.createElement('div');
+                claimedSkillsSection.innerHTML = '<h3 style="margin-bottom: 5px;">Claimed Skills Assessments</h3><p style="font-size: 14px; margin-top: 0; color: #555;">Based strictly on the skills parsed from your text/input.</p><div id="claimedSkillsBtns" style="margin-bottom: 20px;"></div>';
+                
+                const targetTitleSection = document.createElement('div');
+                targetTitleSection.innerHTML = '<h3 style="margin-bottom: 5px;">Target Job Title Assessments</h3><p style="font-size: 14px; margin-top: 0; color: #555;">Additional must-have skills generated intelligently based purely on your desired job role.</p><div id="targetTitleBtns" style="margin-bottom: 20px;"></div>';
+
+                btnContainer.appendChild(claimedSkillsSection);
+                btnContainer.appendChild(targetTitleSection);
+
                 if (data.assessment && Array.isArray(data.assessment.assessments)) {
                     data.assessment.assessments.forEach((assmnt, index) => {
                         const btn = document.createElement('button');
                         btn.textContent = `View ${assmnt.skill || `Assessment ${index + 1}`}`;
                         btn.style.marginRight = '10px';
                         btn.style.marginBottom = '10px';
+                        
+                        if (assmnt.section && assmnt.section.includes('Target Job Title')) {
+                            targetTitleSection.querySelector('#targetTitleBtns').appendChild(btn);
+                        } else {
+                            claimedSkillsSection.querySelector('#claimedSkillsBtns').appendChild(btn);
+                        }
                         
                         const detailDiv = document.createElement('div');
                         detailDiv.style.display = 'none';
@@ -161,7 +200,7 @@
                                 if ((!renderOptions || renderOptions.length === 0) && String(q.type).toLowerCase() === 'true_false') {
                                     renderOptions = ['True', 'False'];
                                 }
-                                if (renderOptions) {
+                                if (renderOptions && renderOptions.length > 0) {
                                     renderOptions.forEach((opt, optIndex) => {
                                         blockHtml += `
                                             <div style="margin-bottom: 8px;">
@@ -172,6 +211,13 @@
                                             </div>
                                         `;
                                     });
+                                } else {
+                                    // Text input for fill-in-the-blank and non-multiple-choice
+                                    blockHtml += `
+                                        <div style="margin-bottom: 8px;">
+                                            <input type="text" class="text-answer" name="q-${index}-${qIndex}" placeholder="Type your answer here..." style="width: 100%; max-width: 400px; padding: 8px; border: 1px solid #ccc; border-radius: 4px;" />
+                                        </div>
+                                    `;
                                 }
                                 blockHtml += `</div>`;
                                 
@@ -211,16 +257,26 @@
                                 qBlocks.forEach(block => {
                                     const correctAnswer = block.correctAnswerValue || '';
                                     const selectedInput = block.querySelector('input[type="radio"]:checked');
+                                    const textInput = block.querySelector('input[type="text"].text-answer');
                                     const feedback = block.querySelector('.feedback');
                                     const feedbackResult = block.querySelector('.feedback-result');
                                     
                                     feedback.style.display = 'block';
                                     
+                                    let isCorrect = false;
+                                    let userSelectedVal = null;
+
                                     if (selectedInput) {
-                                        let selRaw = String(selectedInput.value).trim();
+                                        userSelectedVal = String(selectedInput.value).trim();
+                                    } else if (textInput && textInput.value.trim() !== '') {
+                                        userSelectedVal = String(textInput.value).trim();
+                                    }
+                                    
+                                    if (userSelectedVal !== null) {
+                                        let selRaw = userSelectedVal;
                                         let corRaw = String(correctAnswer).trim();
                                         
-                                        let isCorrect = selRaw.toLowerCase() === corRaw.toLowerCase();
+                                        isCorrect = selRaw.toLowerCase() === corRaw.toLowerCase();
                                         
                                         if (!isCorrect) {
                                             let stripSel = selRaw.replace(/^[a-e][\.\)]\s*/i, '').trim().toLowerCase();
@@ -248,26 +304,18 @@
                                             feedback.style.borderLeftColor = 'red';
                                         }
                                     } else {
-                                        feedbackResult.textContent = 'No answer selected';
+                                        feedbackResult.textContent = 'No answer provided';
                                         feedbackResult.style.color = 'orange';
                                         feedback.style.borderLeftColor = 'orange';
                                     }
 
-                                    if (selectedInput) {
-                                        resultsToSave.push({
-                                            question_id: block.dbId,
-                                            selected_option: String(selectedInput.value).trim(),
-                                            is_correct: isCorrect
-                                        });
-                                    } else {
-                                        resultsToSave.push({
-                                            question_id: block.dbId,
-                                            selected_option: null,
-                                            is_correct: false
-                                        });
-                                    }
+                                    resultsToSave.push({
+                                        question_id: block.dbId,
+                                        selected_option: userSelectedVal,
+                                        is_correct: isCorrect
+                                    });
                                     
-                                    block.querySelectorAll('input[type="radio"]').forEach(inp => inp.disabled = true);
+                                    block.querySelectorAll('input').forEach(inp => inp.disabled = true);
                                 });
                                 
                                 let scoreDiv = document.createElement('div');
@@ -312,9 +360,17 @@
                             detailDiv.style.display = 'block';
                         };
                         
-                        btnContainer.appendChild(btn);
                         detailsContainer.appendChild(detailDiv);
                     });
+                    
+                    // Cleanup empty sections defensively
+                    if (targetTitleSection.querySelector('#targetTitleBtns').children.length === 0) {
+                        targetTitleSection.style.display = 'none';
+                    }
+                    if (claimedSkillsSection.querySelector('#claimedSkillsBtns').children.length === 0) {
+                        claimedSkillsSection.style.display = 'none';
+                    }
+                    
                 } else {
                     // Fallback in case AI doesn't follow the exact JSON grouping structure
                     detailsContainer.innerHTML = '<pre>' + JSON.stringify(data.assessment, null, 2) + '</pre>';

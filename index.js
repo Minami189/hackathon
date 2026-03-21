@@ -19,6 +19,20 @@ app.use(express.json());
 app.get("/assessment", (req, res) => {
     res.sendFile(path.join(__dirname, 'frontend-test', 'assessment.html'));
 });
+
+app.get("/login", (req, res) => {
+    res.sendFile(path.join(__dirname, 'frontend-test', 'login.html'));
+});
+app.get("/register", (req, res) => {
+    res.sendFile(path.join(__dirname, 'frontend-test', 'register.html'));
+});
+app.get("/results", (req, res) => {
+    res.sendFile(path.join(__dirname, 'frontend-test', 'results.html'));
+});
+app.get("/jobs", (req, res) => {
+    res.sendFile(path.join(__dirname, 'frontend-test', 'jobs.html'));
+});
+
 app.use("/api/v1", assesmentRouter);
 app.use('/api/v1', accountRouter);
 
