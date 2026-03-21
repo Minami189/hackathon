@@ -13,30 +13,36 @@
             color: black;
             background-color: white;
         }
+
         .container {
             max-width: 600px;
             margin-bottom: 20px;
         }
+
         .input-field {
             display: block;
             width: 100%;
             margin-bottom: 10px;
             padding: 5px;
         }
+
         .btn-generate {
             padding: 5px 10px;
             cursor: pointer;
         }
+
         #status-area {
             margin-top: 10px;
             font-weight: bold;
         }
+
         .result-container {
             max-width: 800px;
             margin-top: 20px;
             border-top: 2px solid black;
             padding-top: 10px;
         }
+
         pre {
             background-color: #eee;
             padding: 10px;
@@ -50,13 +56,17 @@
     <div class="container">
         <div style="display: flex; justify-content: space-between; align-items: center;">
             <h1>AI Assessment Generator</h1>
-            <a href="/results" style="padding: 8px 16px; background: #000; color: #fff; text-decoration: none; border-radius: 4px; font-weight: bold; font-size: 14px;">View My Results</a>
+            <a href="/results"
+                style="padding: 8px 16px; background: #000; color: #fff; text-decoration: none; border-radius: 4px; font-weight: bold; font-size: 14px;">View
+                My Results</a>
         </div>
         <p>Ready to evaluate incoming profiles? Enter the extracted candidate variables below to instantly generate a
             comprehensive assessment report.</p>
 
-        <input type="text" id="jobTitle" class="input-field" placeholder="Job Title (e.g. Frontend Developer)" />
-        <input type="text" id="skills" class="input-field" placeholder="Skills (comma separated, e.g. React, JS)" />
+        <input type="text" id="jobTitle" class="input-field"
+            placeholder="Job Title / Experience / Role from resume (e.g. Frontend Developer)" />
+        <input type="text" id="skills" class="input-field"
+            placeholder="Skills from resume (comma separated, e.g. React, JS)" />
 
         <button class="btn-generate" id="generateBtn">
             Generate Assessment
@@ -138,7 +148,7 @@
                 if (targetData.assessment && Array.isArray(targetData.assessment.assessments)) {
                     allAssmnts.push(...targetData.assessment.assessments);
                 }
-                
+
                 const data = { assessment: { assessments: allAssmnts } };
 
                 statusArea.textContent = 'Assessment generated successfully!';
@@ -153,7 +163,7 @@
 
                 const claimedSkillsSection = document.createElement('div');
                 claimedSkillsSection.innerHTML = '<h3 style="margin-bottom: 5px;">Claimed Skills Assessments</h3><p style="font-size: 14px; margin-top: 0; color: #555;">Based strictly on the skills parsed from your text/input.</p><div id="claimedSkillsBtns" style="margin-bottom: 20px;"></div>';
-                
+
                 const targetTitleSection = document.createElement('div');
                 targetTitleSection.innerHTML = '<h3 style="margin-bottom: 5px;">Target Job Title Assessments</h3><p style="font-size: 14px; margin-top: 0; color: #555;">Additional must-have skills generated intelligently based purely on your desired job role.</p><div id="targetTitleBtns" style="margin-bottom: 20px;"></div>';
 
@@ -166,35 +176,35 @@
                         btn.textContent = `View ${assmnt.skill || `Assessment ${index + 1}`}`;
                         btn.style.marginRight = '10px';
                         btn.style.marginBottom = '10px';
-                        
+
                         if (assmnt.section && assmnt.section.includes('Target Job Title')) {
                             targetTitleSection.querySelector('#targetTitleBtns').appendChild(btn);
                         } else {
                             claimedSkillsSection.querySelector('#claimedSkillsBtns').appendChild(btn);
                         }
-                        
+
                         const detailDiv = document.createElement('div');
                         detailDiv.style.display = 'none';
                         detailDiv.style.marginTop = '20px';
                         detailDiv.style.borderTop = '1px dashed black';
                         detailDiv.style.paddingTop = '10px';
-                        
+
                         let htmlContent = `<h3>${assmnt.title || assmnt.skill} (${assmnt.priority || ''})</h3>`;
                         detailDiv.innerHTML = htmlContent;
-                        
+
                         const questionsContainer = document.createElement('div');
-                        
+
                         if (assmnt.questions) {
                             assmnt.questions.forEach((q, qIndex) => {
                                 const qBlock = document.createElement('div');
                                 qBlock.style.marginBottom = '30px';
                                 qBlock.className = 'question-block';
-                                
+
                                 let blockHtml = `<strong>Q${q.id || (qIndex + 1)}: ${q.question || ''}</strong><br>`;
                                 if (q.code_snippet && q.code_snippet !== 'null') {
                                     blockHtml += `<pre>${String(q.code_snippet).replace(/</g, '&lt;').replace(/>/g, '&gt;')}</pre>`;
                                 }
-                                
+
                                 blockHtml += `<div style="margin-top: 10px;">`;
                                 let renderOptions = q.options;
                                 if ((!renderOptions || renderOptions.length === 0) && String(q.type).toLowerCase() === 'true_false') {
@@ -220,7 +230,7 @@
                                     `;
                                 }
                                 blockHtml += `</div>`;
-                                
+
                                 blockHtml += `
                                     <div class="feedback" style="display: none; margin-top: 15px; padding: 12px; background-color: #f9f9f9; border-left: 4px solid #ccc;">
                                         <div class="feedback-result" style="font-weight: bold; margin-bottom: 5px;"></div>
@@ -228,16 +238,16 @@
                                         <div><small><strong>Explanation:</strong> ${q.explanation || ''}</small></div>
                                     </div>
                                 `;
-                                
+
                                 qBlock.innerHTML = blockHtml;
                                 qBlock.correctAnswerValue = q.correct_answer;
                                 qBlock.dbId = q.db_id;
                                 questionsContainer.appendChild(qBlock);
                             });
                         }
-                        
+
                         detailDiv.appendChild(questionsContainer);
-                        
+
                         if (assmnt.questions && assmnt.questions.length > 0) {
                             const submitBtn = document.createElement('button');
                             submitBtn.textContent = 'Submit Answers';
@@ -248,21 +258,21 @@
                             submitBtn.style.color = '#fff';
                             submitBtn.style.border = 'none';
                             submitBtn.style.fontWeight = 'bold';
-                            
+
                             submitBtn.onclick = async () => {
                                 const qBlocks = questionsContainer.querySelectorAll('.question-block');
                                 let score = 0;
                                 let resultsToSave = [];
-                                
+
                                 qBlocks.forEach(block => {
                                     const correctAnswer = block.correctAnswerValue || '';
                                     const selectedInput = block.querySelector('input[type="radio"]:checked');
                                     const textInput = block.querySelector('input[type="text"].text-answer');
                                     const feedback = block.querySelector('.feedback');
                                     const feedbackResult = block.querySelector('.feedback-result');
-                                    
+
                                     feedback.style.display = 'block';
-                                    
+
                                     let isCorrect = false;
                                     let userSelectedVal = null;
 
@@ -271,17 +281,17 @@
                                     } else if (textInput && textInput.value.trim() !== '') {
                                         userSelectedVal = String(textInput.value).trim();
                                     }
-                                    
+
                                     if (userSelectedVal !== null) {
                                         let selRaw = userSelectedVal;
                                         let corRaw = String(correctAnswer).trim();
-                                        
+
                                         isCorrect = selRaw.toLowerCase() === corRaw.toLowerCase();
-                                        
+
                                         if (!isCorrect) {
                                             let stripSel = selRaw.replace(/^[a-e][\.\)]\s*/i, '').trim().toLowerCase();
                                             let stripCor = corRaw.replace(/^[a-e][\.\)]\s*/i, '').trim().toLowerCase();
-                                            
+
                                             if (stripSel === stripCor && stripSel.length > 0) {
                                                 isCorrect = true;
                                             } else if (/^[a-e]$/i.test(corRaw)) {
@@ -314,10 +324,10 @@
                                         selected_option: userSelectedVal,
                                         is_correct: isCorrect
                                     });
-                                    
+
                                     block.querySelectorAll('input').forEach(inp => inp.disabled = true);
                                 });
-                                
+
                                 let scoreDiv = document.createElement('div');
                                 scoreDiv.style.marginTop = '20px';
                                 scoreDiv.style.padding = '15px';
@@ -326,7 +336,7 @@
                                 scoreDiv.style.fontSize = '18px';
                                 scoreDiv.style.fontWeight = 'bold';
                                 scoreDiv.textContent = `You scored ${score} out of ${qBlocks.length}!`;
-                                
+
                                 detailDiv.appendChild(scoreDiv);
                                 submitBtn.style.display = 'none';
 
@@ -351,18 +361,18 @@
                                     }
                                 }
                             };
-                            
+
                             detailDiv.appendChild(submitBtn);
                         }
-                        
+
                         btn.onclick = () => {
                             Array.from(detailsContainer.children).forEach(child => child.style.display = 'none');
                             detailDiv.style.display = 'block';
                         };
-                        
+
                         detailsContainer.appendChild(detailDiv);
                     });
-                    
+
                     // Cleanup empty sections defensively
                     if (targetTitleSection.querySelector('#targetTitleBtns').children.length === 0) {
                         targetTitleSection.style.display = 'none';
@@ -370,7 +380,7 @@
                     if (claimedSkillsSection.querySelector('#claimedSkillsBtns').children.length === 0) {
                         claimedSkillsSection.style.display = 'none';
                     }
-                    
+
                 } else {
                     // Fallback in case AI doesn't follow the exact JSON grouping structure
                     detailsContainer.innerHTML = '<pre>' + JSON.stringify(data.assessment, null, 2) + '</pre>';
