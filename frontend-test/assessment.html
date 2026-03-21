@@ -78,6 +78,14 @@
         const assessmentResult = document.getElementById('assessmentResult');
 
         generateBtn.addEventListener('click', async () => {
+            const userId = localStorage.getItem('userId');
+            if (!userId) {
+                statusArea.textContent = 'Please log in first before generating an assessment.';
+                statusArea.className = 'error';
+                setTimeout(() => window.location.href = '/login', 2000);
+                return;
+            }
+
             const jobTitle = jobTitleInput.value.trim();
             const skillsVal = skillsInput.value.trim();
 
@@ -100,7 +108,7 @@
                 const response = await fetch('/api/v1/generate', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ jobTitle, skills })
+                    body: JSON.stringify({ jobTitle, skills, userId })
                 });
 
                 const data = await response.json();
@@ -177,6 +185,7 @@
                                 
                                 qBlock.innerHTML = blockHtml;
                                 qBlock.correctAnswerValue = q.correct_answer;
+                                qBlock.dbId = q.db_id;
                                 questionsContainer.appendChild(qBlock);
                             });
                         }
@@ -194,9 +203,10 @@
                             submitBtn.style.border = 'none';
                             submitBtn.style.fontWeight = 'bold';
                             
-                            submitBtn.onclick = () => {
+                            submitBtn.onclick = async () => {
                                 const qBlocks = questionsContainer.querySelectorAll('.question-block');
                                 let score = 0;
+                                let resultsToSave = [];
                                 
                                 qBlocks.forEach(block => {
                                     const correctAnswer = block.correctAnswerValue || '';
@@ -242,6 +252,20 @@
                                         feedbackResult.style.color = 'orange';
                                         feedback.style.borderLeftColor = 'orange';
                                     }
+
+                                    if (selectedInput) {
+                                        resultsToSave.push({
+                                            question_id: block.dbId,
+                                            selected_option: String(selectedInput.value).trim(),
+                                            is_correct: isCorrect
+                                        });
+                                    } else {
+                                        resultsToSave.push({
+                                            question_id: block.dbId,
+                                            selected_option: null,
+                                            is_correct: false
+                                        });
+                                    }
                                     
                                     block.querySelectorAll('input[type="radio"]').forEach(inp => inp.disabled = true);
                                 });
@@ -257,6 +281,27 @@
                                 
                                 detailDiv.appendChild(scoreDiv);
                                 submitBtn.style.display = 'none';
+
+                                // Send results to backend
+                                const userId = localStorage.getItem('userId');
+                                if (userId && resultsToSave.length > 0) {
+                                    scoreDiv.innerHTML += '<br><small>Saving results to database...</small>';
+                                    try {
+                                        const submitRes = await fetch('/api/v1/submit', {
+                                            method: 'POST',
+                                            headers: { 'Content-Type': 'application/json' },
+                                            body: JSON.stringify({ userId, results: resultsToSave })
+                                        });
+                                        if (submitRes.ok) {
+                                            scoreDiv.innerHTML += '<br><small style="color: green;">Results successfully saved!</small>';
+                                        } else {
+                                            const errorData = await submitRes.json();
+                                            scoreDiv.innerHTML += `<br><small style="color: red;">Failed to save results: ${errorData.error || 'Unknown error'}</small>`;
+                                        }
+                                    } catch (err) {
+                                        scoreDiv.innerHTML += '<br><small style="color: red;">Network error saving results.</small>';
+                                    }
+                                }
                             };
                             
                             detailDiv.appendChild(submitBtn);
