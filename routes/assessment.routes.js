@@ -42,63 +42,62 @@ router.post('/generate', async (req, res) => {
 
         const assessment = await generateAssessment(jobTitle, skills);
 
-        // Store into database
+
         try {
             await pool.query('BEGIN');
             for (const assmnt of assessment.assessments) {
-                // Ensure priority works with any pg enum formatting (e.g. replace spaces with underscores if needed, or mapping)
-                // Assuming it works exactly. If not, Postgres might complain, but for now we'll pass the groq value.
+
                 let priorityVal = String(assmnt.priority).toLowerCase().trim();
-                // Replace any underscores with spaces in case AI generated it wrong
+
                 priorityVal = priorityVal.replace('_', ' ');
-                
+
                 if (!['high priority', 'medium priority', 'low priority'].includes(priorityVal)) {
                     if (['high', 'medium', 'low'].includes(priorityVal)) {
-                         priorityVal = priorityVal + ' priority'; 
+                        priorityVal = priorityVal + ' priority';
                     } else {
-                         priorityVal = 'medium priority'; // fallback
+                        priorityVal = 'medium priority'; // fallback
                     }
                 }
 
                 const assmtRes = await pool.query(
                     `INSERT INTO assessments (user_id, skill, priority, job_title) 
                      VALUES ($1, $2, CAST($3 AS priority_level), $4) RETURNING id`,
-                     [userId, assmnt.skill || 'Unknown', priorityVal, jobTitle]
+                    [userId, assmnt.skill || 'Unknown', priorityVal, jobTitle]
                 );
-                
+
                 const assessmentId = assmtRes.rows[0].id;
 
                 if (assmnt.questions) {
                     for (let i = 0; i < assmnt.questions.length; i++) {
                         const q = assmnt.questions[i];
-                        
+
                         let safeType = q.type || 'multiple_choice';
-                        // if types have spaces? groq prompt says "multiple_choice", "true_false", "code_output", etc.
+
                         safeType = safeType.toLowerCase();
-                        
+
                         const qRes = await pool.query(
                             `INSERT INTO questions (assessment_id, sequence_num, type, approach, question, code_snippet, correct_answer, explanation)
                              VALUES ($1, $2, CAST($3 AS question_type), $4, $5, $6, $7, $8) RETURNING id`,
                             [
-                                assessmentId, 
-                                i + 1, 
-                                safeType, 
-                                q.approach || 'technical', 
-                                q.question || 'Missing question?', 
-                                q.code_snippet !== 'null' && q.code_snippet !== null ? q.code_snippet : null, 
-                                typeof q.correct_answer === 'string' ? q.correct_answer : String(q.correct_answer || ''), 
+                                assessmentId,
+                                i + 1,
+                                safeType,
+                                q.approach || 'technical',
+                                q.question || 'Missing question?',
+                                q.code_snippet !== 'null' && q.code_snippet !== null ? q.code_snippet : null,
+                                typeof q.correct_answer === 'string' ? q.correct_answer : String(q.correct_answer || ''),
                                 q.explanation || ''
                             ]
                         );
-                        
+
                         const qId = qRes.rows[0].id;
-                        q.db_id = qId; // Expose ID to frontend
-                        
+                        q.db_id = qId;
+
                         if (q.options && Array.isArray(q.options) && q.options.length > 0) {
                             for (let j = 0; j < q.options.length; j++) {
                                 const optStr = String(q.options[j]);
-                                const label = String.fromCharCode(65 + j); // A, B, C...
-                                
+                                const label = String.fromCharCode(65 + j);
+
                                 let isCorrect = false;
                                 const corAns = String(q.correct_answer || '').toLowerCase().trim();
                                 if (corAns === label.toLowerCase() || corAns.startsWith(label.toLowerCase() + '.') || corAns.startsWith(label.toLowerCase() + ')')) {
@@ -114,17 +113,17 @@ router.post('/generate', async (req, res) => {
                                 );
                             }
                         } else if (safeType === 'true_false') {
-                             const options = ['True', 'False'];
-                             for (let j = 0; j < options.length; j++) {
-                                 const label = String.fromCharCode(65 + j);
-                                 const isCorrect = String(q.correct_answer || '').toLowerCase() === options[j].toLowerCase() || String(q.correct_answer || '').toLowerCase().startsWith(label.toLowerCase());
-                                 
-                                 await pool.query(
-                                     `INSERT INTO question_options (question_id, label, content, is_correct, explanation)
+                            const options = ['True', 'False'];
+                            for (let j = 0; j < options.length; j++) {
+                                const label = String.fromCharCode(65 + j);
+                                const isCorrect = String(q.correct_answer || '').toLowerCase() === options[j].toLowerCase() || String(q.correct_answer || '').toLowerCase().startsWith(label.toLowerCase());
+
+                                await pool.query(
+                                    `INSERT INTO question_options (question_id, label, content, is_correct, explanation)
                                       VALUES ($1, $2, $3, $4, $5)`,
-                                     [qId, label, options[j], isCorrect, q.explanation || '']
-                                 );
-                             }
+                                    [qId, label, options[j], isCorrect, q.explanation || '']
+                                );
+                            }
                         }
                     }
                 }
@@ -133,8 +132,6 @@ router.post('/generate', async (req, res) => {
         } catch (dbErr) {
             await pool.query('ROLLBACK');
             console.error("Database error during assessment storage:", dbErr);
-            // We can optionally still return the assessment even if saving fails, 
-            // but the prompt implies it SHOULD be saved. Let's still continue to show to user, but warn.
         }
 
         res.json({ success: true, assessment });
@@ -150,7 +147,7 @@ router.post('/submit', async (req, res) => {
         if (!userId || !results || !Array.isArray(results)) {
             return res.status(400).json({ error: "Missing userId or results" });
         }
-        
+
         await pool.query('BEGIN');
         for (const r of results) {
             await pool.query(
